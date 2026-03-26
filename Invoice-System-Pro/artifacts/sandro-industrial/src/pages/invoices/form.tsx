@@ -65,8 +65,9 @@ export default function InvoiceForm() {
   const { data: productsData } = useListProducts({ search: productSearch, limit: 5 });
   const { data: staffData } = useListStaff();
 
-  const { data: existingInvoice, isLoading: loadingExisting } = useGetInvoice(isEditing ? parseInt(id!) : 0, {
-    query: { enabled: isEditing }
+  const invoiceId = isEditing ? parseInt(id!) : 0;
+  const { data: existingInvoice, isLoading: loadingExisting } = useGetInvoice(invoiceId, {
+    query: { enabled: isEditing, queryKey: [`/api/invoices/${invoiceId}`] }
   });
 
   const createMutation = useCreateInvoice();

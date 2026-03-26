@@ -1,0 +1,9 @@
+{
+  "buildCommand": "cd artifacts/sandro-industrial && npx pnpm install --frozen-lockfile=false && npx pnpm run build",
+  "outputDirectory": "artifacts/sandro-industrial/dist/public",
+  "installCommand": "npm install -g pnpm && pnpm install --frozen-lockfile=false",
+  "framework": null,
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

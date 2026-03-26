@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useLogin } from "@workspace/api-client-react";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,53 +6,72 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { generateDemoToken } from "@/lib/mock-data";
+
+// Demo mode detection
+const DEMO_MODE = import.meta.env.PROD && !import.meta.env.VITE_API_URL;
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
-  const { mutate: login } = useLogin();
   const { setToken } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
 
     setIsLoading(true);
     const startTime = Date.now();
 
-    login(
-      { data: { email, password } },
-      {
-        onSuccess: (data) => {
-          const elapsed = Date.now() - startTime;
-          const remaining = Math.max(0, 1500 - elapsed);
-          setTimeout(() => {
-            setToken(data.token);
-            setLoginSuccess(true);
-            setTimeout(() => {
-              toast({ title: "Bienvenido", description: "Inicio de sesión exitoso." });
-              setLocation("/");
-            }, 600);
-          }, remaining);
-        },
-        onError: () => {
-          const elapsed = Date.now() - startTime;
-          const remaining = Math.max(0, 800 - elapsed);
-          setTimeout(() => {
-            setIsLoading(false);
-            toast({
-              variant: "destructive",
-              title: "Error",
-              description: "Credenciales inválidas. Por favor intente nuevamente."
-            });
-          }, remaining);
+    try {
+      let token: string;
+
+      if (DEMO_MODE) {
+        // Demo mode: accept any credentials
+        await new Promise((r) => setTimeout(r, 800));
+        token = generateDemoToken();
+      } else {
+        // Real mode: call the API
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+
+        if (!res.ok) {
+          throw new Error("Invalid credentials");
         }
+
+        const data = await res.json();
+        token = data.token;
       }
-    );
+
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, 1500 - elapsed);
+
+      await new Promise((r) => setTimeout(r, remaining));
+      setToken(token);
+      setLoginSuccess(true);
+
+      setTimeout(() => {
+        toast({ title: "Bienvenido", description: "Inicio de sesión exitoso." });
+        setLocation("/");
+      }, 600);
+    } catch {
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, 800 - elapsed);
+      await new Promise((r) => setTimeout(r, remaining));
+      setIsLoading(false);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Credenciales inválidas. Por favor intente nuevamente.",
+      });
+    }
   };
 
   // Full-screen success overlay
@@ -170,6 +188,12 @@ export default function Login() {
               </form>
             </CardContent>
           </Card>
+
+          {DEMO_MODE && (
+            <p className="text-center text-xs text-muted-foreground/70">
+              Modo demostración — Ingrese cualquier email y contraseña.
+            </p>
+          )}
         </div>
       </div>
     </div>
