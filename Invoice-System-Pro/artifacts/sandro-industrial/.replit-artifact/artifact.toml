@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Sandro Industrial - Sistema de Facturación"
+version = "1.0.0"
+id = "artifacts/sandro-industrial"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21738
+
+[services.development]
+run = "pnpm --filter @workspace/sandro-industrial run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/sandro-industrial", "run", "build" ]
+publicDir = "artifacts/sandro-industrial/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21738"
+BASE_PATH = "/"

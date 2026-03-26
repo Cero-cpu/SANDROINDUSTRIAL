@@ -1,0 +1,987 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Sandro Industrial Invoice System API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: invoices
+    description: Invoice operations
+  - name: clients
+    description: Client operations
+  - name: products
+    description: Product catalog operations
+  - name: staff
+    description: Staff/personnel operations
+  - name: dashboard
+    description: Dashboard metrics
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /invoices:
+    get:
+      operationId: listInvoices
+      tags: [invoices]
+      summary: List invoices with pagination
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/InvoiceStatus"
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Paginated invoice list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedInvoices"
+
+    post:
+      operationId: createInvoice
+      tags: [invoices]
+      summary: Create a new invoice
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInvoiceRequest"
+      responses:
+        "201":
+          description: Invoice created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+
+  /invoices/{id}:
+    get:
+      operationId: getInvoice
+      tags: [invoices]
+      summary: Get invoice by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Invoice detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    put:
+      operationId: updateInvoice
+      tags: [invoices]
+      summary: Update invoice
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInvoiceRequest"
+      responses:
+        "200":
+          description: Updated invoice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+
+    delete:
+      operationId: deleteInvoice
+      tags: [invoices]
+      summary: Soft-delete invoice
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /invoices/{id}/status:
+    patch:
+      operationId: updateInvoiceStatus
+      tags: [invoices]
+      summary: Update invoice status
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  $ref: "#/components/schemas/InvoiceStatus"
+              required: [status]
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+
+  /clients:
+    get:
+      operationId: listClients
+      tags: [clients]
+      summary: List clients
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Paginated clients
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedClients"
+
+    post:
+      operationId: createClient
+      tags: [clients]
+      summary: Create client
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClientRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+
+  /clients/{id}:
+    get:
+      operationId: getClient
+      tags: [clients]
+      summary: Get client by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+
+    put:
+      operationId: updateClient
+      tags: [clients]
+      summary: Update client
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClientRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+
+    delete:
+      operationId: deleteClient
+      tags: [clients]
+      summary: Delete client
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /clients/{id}/invoices:
+    get:
+      operationId: getClientInvoices
+      tags: [clients]
+      summary: Get invoices for a client
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Client invoices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Invoice"
+
+  /products:
+    get:
+      operationId: listProducts
+      tags: [products]
+      summary: List products
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: active
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Paginated products
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedProducts"
+
+    post:
+      operationId: createProduct
+      tags: [products]
+      summary: Create product
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+  /products/{id}:
+    put:
+      operationId: updateProduct
+      tags: [products]
+      summary: Update product
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+    delete:
+      operationId: deleteProduct
+      tags: [products]
+      summary: Delete product
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /staff:
+    get:
+      operationId: listStaff
+      tags: [staff]
+      summary: List staff members
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Staff list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StaffMember"
+
+    post:
+      operationId: createStaff
+      tags: [staff]
+      summary: Create staff member
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStaffRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StaffMember"
+
+  /staff/{id}:
+    put:
+      operationId: updateStaff
+      tags: [staff]
+      summary: Update staff member
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStaffRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StaffMember"
+
+    delete:
+      operationId: deleteStaff
+      tags: [staff]
+      summary: Delete staff member
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /dashboard/metrics:
+    get:
+      operationId: getDashboardMetrics
+      tags: [dashboard]
+      summary: Get dashboard metrics
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Dashboard metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardMetrics"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required: [error]
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required: [success]
+
+    InvoiceStatus:
+      type: string
+      enum: [pending, paid, cancelled]
+
+    StaffRole:
+      type: string
+      enum: [measurer, quoter, both]
+
+    UserRole:
+      type: string
+      enum: [admin, seller, readonly]
+
+    PaymentMethod:
+      type: string
+      enum: ["50%", "100%", "contra_entrega"]
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required: [email, password]
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required: [token, user]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          $ref: "#/components/schemas/UserRole"
+      required: [id, email, name, role]
+
+    Client:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        name:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        province:
+          type: string
+        country:
+          type: string
+        phone:
+          type: string
+        mobile:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name]
+
+    CreateClientRequest:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        province:
+          type: string
+        country:
+          type: string
+        phone:
+          type: string
+        mobile:
+          type: string
+      required: [name]
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        unitPrice:
+          type: number
+        unit:
+          type: string
+        category:
+          type: string
+        stock:
+          type: integer
+        active:
+          type: boolean
+      required: [id, name, unitPrice]
+
+    CreateProductRequest:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        unitPrice:
+          type: number
+        unit:
+          type: string
+        category:
+          type: string
+        stock:
+          type: integer
+        active:
+          type: boolean
+      required: [name, unitPrice]
+
+    StaffMember:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        role:
+          $ref: "#/components/schemas/StaffRole"
+        active:
+          type: boolean
+      required: [id, name, role]
+
+    CreateStaffRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        role:
+          $ref: "#/components/schemas/StaffRole"
+        active:
+          type: boolean
+      required: [name, role]
+
+    InvoiceItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        productId:
+          type: integer
+        description:
+          type: string
+        quantity:
+          type: number
+        unitPrice:
+          type: number
+        total:
+          type: number
+      required: [description, quantity, unitPrice, total]
+
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: integer
+        invoiceNumber:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        clientId:
+          type: integer
+        client:
+          $ref: "#/components/schemas/Client"
+        measuredById:
+          type: integer
+        measuredBy:
+          $ref: "#/components/schemas/StaffMember"
+        quotedById:
+          type: integer
+        quotedBy:
+          $ref: "#/components/schemas/StaffMember"
+        budgetDate:
+          type: string
+          format: date
+        deliveryDate:
+          type: string
+          format: date
+        paymentMethod:
+          $ref: "#/components/schemas/PaymentMethod"
+        downPayment:
+          type: number
+        notes:
+          type: string
+        status:
+          $ref: "#/components/schemas/InvoiceStatus"
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InvoiceItem"
+        total:
+          type: number
+      required: [id, invoiceNumber, status, total]
+
+    CreateInvoiceRequest:
+      type: object
+      properties:
+        clientId:
+          type: integer
+        measuredById:
+          type: integer
+        quotedById:
+          type: integer
+        budgetDate:
+          type: string
+          format: date
+        deliveryDate:
+          type: string
+          format: date
+        paymentMethod:
+          $ref: "#/components/schemas/PaymentMethod"
+        downPayment:
+          type: number
+        notes:
+          type: string
+        status:
+          $ref: "#/components/schemas/InvoiceStatus"
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              productId:
+                type: integer
+              description:
+                type: string
+              quantity:
+                type: number
+              unitPrice:
+                type: number
+              total:
+                type: number
+            required: [description, quantity, unitPrice, total]
+      required: [items]
+
+    PaginatedInvoices:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Invoice"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer
+      required: [data, total, page, limit, totalPages]
+
+    PaginatedClients:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Client"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer
+      required: [data, total, page, limit, totalPages]
+
+    PaginatedProducts:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer
+      required: [data, total, page, limit, totalPages]
+
+    MonthlyRevenue:
+      type: object
+      properties:
+        month:
+          type: string
+        total:
+          type: number
+        count:
+          type: integer
+      required: [month, total, count]
+
+    DashboardMetrics:
+      type: object
+      properties:
+        monthInvoices:
+          type: integer
+        monthRevenue:
+          type: number
+        pendingInvoices:
+          type: integer
+        paidInvoices:
+          type: integer
+        monthlyRevenue:
+          type: array
+          items:
+            $ref: "#/components/schemas/MonthlyRevenue"
+        recentInvoices:
+          type: array
+          items:
+            $ref: "#/components/schemas/Invoice"
+      required: [monthInvoices, monthRevenue, pendingInvoices, paidInvoices, monthlyRevenue, recentInvoices]

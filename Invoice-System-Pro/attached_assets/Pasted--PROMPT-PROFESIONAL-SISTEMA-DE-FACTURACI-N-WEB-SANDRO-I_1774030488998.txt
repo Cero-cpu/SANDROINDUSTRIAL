@@ -1,0 +1,344 @@
+# PROMPT PROFESIONAL — SISTEMA DE FACTURACIÓN WEB "SANDRO INDUSTRIAL"
+
+---
+
+## 🎯 CONTEXTO Y OBJETIVO
+
+Necesito que construyas un **sistema de facturación web empresarial completo, profesional y escalable** para la empresa **SANDRO INDUSTRIAL**, ubicada en C/ Duarte, Sector Los Amapolos, Santo Domingo, República Dominicana. RCN: 131143662. Tel: 809-296-0996 / 809-559-9744.
+
+La empresa se dedica a: Ventanas Corredizas, Closets, Ventanas de Aluminio y Cristal, Screeners, Toldos, Puertas de Metal, Puertas Comerciales e Industriales, Cortinas de Baño, Estructuras en Sheetrock, Plafón PVC, Gabinete y Despensa en Aluminio y Cristal para Cocinas.
+
+Existe una versión preliminar en: https://invoice-generator-system--julianabreu924.replit.app/ — úsala como referencia de lo que YA existe, pero el sistema nuevo debe estar **completamente reescrito y mejorado** en arquitectura, diseño y lógica.
+
+---
+
+## 🏗️ STACK TÉCNICO REQUERIDO
+
+- **Frontend**: React + TypeScript + Tailwind CSS
+- **Backend**: Node.js + Express (o Next.js App Router con API Routes)
+- **Base de datos**: PostgreSQL con Prisma ORM (o Supabase)
+- **Autenticación**: JWT con refresh tokens (multi-usuario)
+- **Impresión**: react-to-print o equivalente con estilos CSS @media print
+- **URL del proyecto**: debe contener el nombre "sandro-industrial" (ej: `sandro-industrial-invoices.vercel.app`)
+- **Despliegue**: Vercel (frontend) + Railway o Supabase (backend/DB)
+
+---
+
+## 🎨 PALETA DE COLORES (OBLIGATORIA — basada en el logo y factura oficial)
+
+```css
+:root {
+  --color-primary-red:     #C0392B;  /* Rojo institucional del logo SI */
+  --color-primary-green:   #27AE60;  /* Verde institucional del logo SI */
+  --color-accent-yellow:   #F1C40F;  /* Amarillo de resaltado en fechas */
+  --color-dark:            #1A1A1A;  /* Texto principal oscuro */
+  --color-gray-border:     #BDC3C7;  /* Bordes de tablas */
+  --color-bg-light:        #F8F9FA;  /* Fondo general */
+  --color-bg-white:        #FFFFFF;  /* Fondo de tarjetas y facturas */
+  --color-text-muted:      #7F8C8D;  /* Texto secundario */
+  --color-success:         #2ECC71;
+  --color-danger:          #E74C3C;
+  --color-table-header:    #2C3E50;  /* Cabecera de tablas */
+}
+```
+
+Todos los componentes deben usar estas variables CSS. El diseño debe transmitir **profesionalismo industrial**, limpieza, y autoridad de marca.
+
+---
+
+## 📄 MÓDULO 1 — FACTURA (CRÍTICO: replicar EXACTAMENTE el diseño físico)
+
+### Estructura exacta de la factura impresa (pixel-perfect):
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  [LOGO SI]   SANDRO INDUSTRIAL              [ícono casa] │
+│  *Ventanas Corredizas, Closets *Ventanas de Aluminio...  │
+│  TEL. 809-296-0996 / 809-559-9744                        │
+│  C/ DUARTE, SECTOR LOS AMAPOLOS — RCN: 131143662         │
+│                                          [FECHA: DD/MM/AAAA] │
+├──────────────────────────────┬──────────────────────────┤
+│ Cliente: [nombre]            │ Medido por: [nombre]     │
+│ Código: [#]                  │ Cotizado por: [nombre]   │
+│ C/ [dirección]               │ Presupuesto: $[monto]    │
+│ [Ciudad, Provincia, País]    │ 15 días laborales        │
+│ Teléfono: [tel]              │ Para el [fecha highlight]│
+│ Celular: [cel]               │ Firma del cliente: _____ │
+│ Observación: [texto]         │                          │
+├────────────────┬──────┬──────┴──────┬───────────────────┤
+│ DESCRIPCIÓN    │ CANT.│    PRECIO   │       TOTAL       │
+│ DEL PRODUCTO   │      │             │                   │
+├────────────────┼──────┼─────────────┼───────────────────┤
+│ [producto 1]   │  [n] │  $[precio]  │    $[total]       │
+│ [producto 2]   │  [n] │  $[precio]  │    $[total]       │
+│ [producto 3]   │  [n] │  $[precio]  │    $[total]       │
+│ (filas vacías si hay espacio)                            │
+├────────────────┴──────┼─────────────┼───────────────────┤
+│ Forma de pago         │    Total    │    $[total]       │
+│ [50% / 100%]    [X]   │    Abono    │    $[abono]       │
+│ Contra entrega        │    Resta    │    $[resta]       │
+└───────────────────────┴─────────────┴───────────────────┘
+```
+
+### Reglas de impresión CRÍTICAS:
+1. La factura impresa debe ser **A4 o carta**, con márgenes exactos (top: 10mm, sides: 12mm, bottom: 10mm)
+2. Usar `@media print` con `page-break-inside: avoid` en cada sección
+3. El campo "Para el [fecha]" debe tener fondo **amarillo (#F1C40F)** exactamente como en el original
+4. La tabla de productos debe tener mínimo **8 filas visibles**, rellenando con filas vacías si hay pocos productos
+5. Si hay más de 8 productos, la tabla crece **sin romper el diseño** — los contenedores NO deben desbordarse
+6. La factura debe poderse imprimir aunque haya **campos vacíos** — nunca bloquear la impresión por validación
+7. Encabezado con logo siempre visible en impresión
+8. El número de factura debe generarse **automáticamente** y ser único
+9. Ocultar en impresión: botones, navegación, sidebar, cualquier elemento de UI
+10. Escalar tipografía para que los datos largos (direcciones, descripciones) nunca desborden su celda
+
+---
+
+## 🗄️ MÓDULO 2 — BASE DE DATOS DE PRODUCTOS (Catálogo)
+
+### Interfaz de gestión de productos:
+- Tabla paginada con columnas: **Código | Nombre del Producto | Descripción | Precio Unitario | Unidad (m², unidad, pie, etc.) | Categoría | Stock | Estado (activo/inactivo)**
+- Acciones por fila: Editar (modal inline), Eliminar (con confirmación), Duplicar
+- Buscador en tiempo real por nombre o código
+- Filtros por categoría y estado
+- Importar desde CSV (opcional pero deseable)
+- Al crear una factura, el campo de producto debe ser un **autocomplete** que busca en este catálogo y rellena precio automáticamente
+
+### Categorías sugeridas (pre-cargadas):
+- Ventanas, Closets, Puertas, Toldos, Estructuras, Plafones, Cocinas, Otros
+
+---
+
+## 📋 MÓDULO 3 — GESTIÓN DE FACTURAS
+
+### Lista de facturas:
+- Tabla con: **N° Factura | Fecha | Cliente | Monto Total | Estado (pendiente/pagado/cancelado) | Acciones**
+- Filtros: por fecha (rango), por estado, por cliente
+- Búsqueda por N° de factura o nombre de cliente
+- Paginación server-side (no cargar todas las facturas en memoria)
+- Botones por factura: **Ver | Imprimir | Duplicar | Eliminar**
+- Eliminar con soft-delete (papelera) + opción de eliminación permanente
+- Exportar lista como Excel/CSV
+
+### Vista detalle de factura:
+- Muestra el diseño exacto de la factura (preview antes de imprimir)
+- Botón de imprimir que abre el diálogo de impresión del navegador
+- Botón de editar que vuelve al formulario con los datos precargados
+
+---
+
+## 👥 MÓDULO 4 — GESTIÓN DE CLIENTES
+
+- Base de datos de clientes: Nombre | Código | Dirección | Teléfono | Celular | Ciudad | Provincia | País
+- Al crear factura, campo de cliente con **autocomplete** que rellena todos sus datos automáticamente
+- CRUD completo de clientes
+- Historial de facturas por cliente
+
+---
+
+## 👨‍💼 MÓDULO 5 — GESTIÓN DE PERSONAL (Cotizadores/Medidores)
+
+- Lista de empleados/vendedores: Nombre | Rol (Medidor, Cotizador, Ambos) | Activo
+- Al crear factura, campos "Medido por" y "Cotizado por" son **dropdowns** de esta lista
+- CRUD básico
+
+---
+
+## 🔐 MÓDULO 6 — AUTENTICACIÓN Y MULTI-USUARIO
+
+- Login con email + contraseña
+- Roles: **Admin** (acceso total) | **Vendedor** (crear/ver facturas, sin eliminar) | **Solo lectura**
+- JWT con expiración + refresh token
+- Sesiones simultáneas sin conflictos
+- Pantalla de login con branding de Sandro Industrial
+
+---
+
+## ⚙️ ARQUITECTURA BACKEND — REQUISITOS DE ESCALABILIDAD
+
+### Base de datos (PostgreSQL con Prisma):
+```prisma
+model Invoice {
+  id          Int       @id @default(autoincrement())
+  invoiceNumber String  @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime? // soft delete
+  clientId    Int
+  client      Client    @relation(fields: [clientId], references: [id])
+  measuredById Int?
+  quotedById   Int?
+  budgetDate  DateTime?
+  paymentMethod String  // "50%" | "100%" | "contra entrega"
+  downPayment Decimal   @db.Decimal(12,2)
+  notes       String?
+  status      InvoiceStatus @default(PENDING)
+  items       InvoiceItem[]
+  total       Decimal   @db.Decimal(12,2)
+  userId      Int       // quién creó la factura
+}
+
+model InvoiceItem {
+  id          Int     @id @default(autoincrement())
+  invoiceId   Int
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  productId   Int?
+  product     Product? @relation(fields: [productId], references: [id])
+  description String
+  quantity    Decimal @db.Decimal(10,2)
+  unitPrice   Decimal @db.Decimal(12,2)
+  total       Decimal @db.Decimal(12,2)
+}
+```
+
+### API REST con buenas prácticas:
+- Paginación obligatoria en todos los listados (`?page=1&limit=20`)
+- Índices en columnas de búsqueda frecuente (clientId, invoiceNumber, createdAt)
+- Rate limiting por usuario (express-rate-limit)
+- Validación de inputs con Zod o Joi
+- Manejo centralizado de errores con middlewares
+- Logs estructurados (winston o pino)
+- Variables de entorno para todos los secretos (nunca hardcoded)
+- CORS configurado correctamente para producción
+- Transacciones de DB para operaciones que modifican múltiples tablas
+
+### Concurrencia y consistencia:
+- El número de factura debe generarse con un **sequence de PostgreSQL** para garantizar unicidad sin race conditions
+- No usar MAX(id)+1 para generar números de factura
+- Usar `SELECT FOR UPDATE` o transacciones donde sea necesario
+
+---
+
+## 🖨️ LÓGICA DE IMPRESIÓN — DETALLE TÉCNICO
+
+```css
+@media print {
+  /* Ocultar todo excepto la factura */
+  body > *:not(#invoice-print-area) { display: none !important; }
+  
+  #invoice-print-area {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0;
+    padding: 10mm 12mm;
+    font-size: 11px;
+    font-family: 'Arial', sans-serif;
+  }
+  
+  .invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed; /* CRÍTICO: evita desbordamiento por texto largo */
+  }
+  
+  .invoice-table td, .invoice-table th {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-wrap: break-word;
+    padding: 3px 5px;
+    border: 1px solid #000;
+  }
+  
+  /* Filas vacías para completar tabla */
+  .empty-row { height: 20px; }
+  
+  /* Resaltado de fecha en amarillo */
+  .date-highlight {
+    background-color: #F1C40F !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  @page {
+    size: A4;
+    margin: 10mm 12mm;
+  }
+}
+```
+
+**Regla de filas vacías**: siempre mostrar mínimo 8 filas en la tabla de productos. Si hay 3 productos, agregar 5 filas vacías. Si hay 10 productos, no agregar vacías. Calcular dinámicamente en el componente.
+
+---
+
+## 📐 REGLAS DE DISEÑO FRONTEND (NO NEGOCIABLES)
+
+1. **Responsive**: funcional en desktop (1280px+) y tablet (768px+). Mobile es secundario pero no debe romperse.
+2. **Sidebar fijo** con íconos + texto: Dashboard, Facturas, Nuevo Presupuesto, Clientes, Productos, Personal, Configuración
+3. **Los contenedores de datos NUNCA deben desbordarse**: usar `overflow-x: auto` en tablas, `text-overflow: ellipsis` en celdas con texto largo, tooltips al hacer hover
+4. **Tipografía**: usar Google Fonts — `'Montserrat'` para títulos, `'Source Sans 3'` para cuerpo
+5. **Sin errores de márgenes**: todos los formularios deben tener padding consistente, las facturas impresas deben respetar los márgenes del papel
+6. **Estado vacío**: cuando no hay datos, mostrar ilustración SVG simple con CTA ("Crear primera factura")
+7. **Feedback visual**: loading skeletons durante carga, toast notifications para éxito/error, confirmación modal para eliminaciones
+8. **Accesibilidad básica**: labels en inputs, contraste mínimo AA, foco visible con teclado
+
+---
+
+## 📊 DASHBOARD PRINCIPAL
+
+- Tarjetas: Total facturas del mes | Monto facturado | Facturas pendientes | Facturas pagadas
+- Gráfico de barras: facturación por mes (últimos 6 meses)
+- Lista de las últimas 5 facturas creadas
+- Acceso rápido: botón "Nueva Factura" prominente
+
+---
+
+## 🔢 NUMERACIÓN DE FACTURAS
+
+- Formato: `SI-YYYY-NNNNNN` (ej: `SI-2026-000001`)
+- Secuencia reinicia por año
+- Visible y editable por admin (para casos de corrección)
+- No reutilizar números eliminados
+
+---
+
+## 📦 ENTREGABLES ESPERADOS
+
+1. Código fuente completo en un repositorio Git estructurado
+2. `/frontend` — React app
+3. `/backend` — Express API (o Next.js unificado)
+4. `/prisma` — Schema y migraciones
+5. `README.md` con instrucciones de instalación local y despliegue
+6. `.env.example` con todas las variables necesarias
+7. Seed script que precarga: categorías, 5 productos de ejemplo, 1 usuario admin, 2 empleados
+8. La URL de producción debe contener "sandro-industrial"
+
+---
+
+## ❌ ERRORES A EVITAR (LISTA NEGRA)
+
+- ❌ No usar `localStorage` como base de datos principal
+- ❌ No cargar TODAS las facturas/productos en memoria de una vez
+- ❌ No hardcodear credenciales, URLs o secretos en el código
+- ❌ No bloquear la impresión si hay campos vacíos
+- ❌ No usar `MAX(id)+1` para números de factura (race condition)
+- ❌ No dejar `console.log` de debug en producción
+- ❌ No usar colores fuera de la paleta definida
+- ❌ No asumir que solo habrá 1 usuario simultáneo
+- ❌ No mezclar lógica de negocio en componentes React (usar custom hooks o servicios)
+- ❌ No olvidar el índice en columnas que se usan en WHERE frecuentemente
+- ❌ No dejar que texto largo desborde contenedores en la UI ni en impresión
+- ❌ No usar fuentes genéricas como Arial, Inter o Roboto como opción principal en el UI
+
+---
+
+## ✅ CHECKLIST DE CALIDAD (verificar antes de entregar)
+
+- [ ] La factura impresa es visualmente idéntica al modelo físico de Sandro Industrial
+- [ ] El campo "Para el [fecha]" tiene fondo amarillo en impresión
+- [ ] Las filas vacías se rellenan hasta completar mínimo 8 líneas en la tabla de productos
+- [ ] Los datos largos no desbordan ningún contenedor (UI ni impresión)
+- [ ] El número de factura es único y se genera automáticamente
+- [ ] Se puede imprimir aunque haya campos opcionales vacíos
+- [ ] El sistema soporta múltiples usuarios simultáneos sin corrupción de datos
+- [ ] Las facturas eliminadas usan soft-delete (recuperables por admin)
+- [ ] El catálogo de productos tiene autocomplete en el formulario de factura
+- [ ] La URL contiene "sandro-industrial"
+- [ ] El login funciona con JWT
+- [ ] El dashboard muestra métricas reales de la DB
+- [ ] La paginación es server-side
+- [ ] El seed script carga datos de ejemplo
+- [ ] El README explica cómo desplegar en producción
+
+---
+
+*Este sistema reemplaza el uso de Excel y facturas manuales para Sandro Industrial. El objetivo es que el equipo pueda generar, imprimir y archivar presupuestos/facturas profesionales en segundos, con todos los datos precargados, sin errores de formato y con total confianza en la integridad de los datos.*

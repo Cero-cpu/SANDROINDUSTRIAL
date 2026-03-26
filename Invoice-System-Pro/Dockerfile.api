@@ -1,0 +1,37 @@
+# ── Stage 1: Build ───────────────────────────────────────────
+FROM node:24-slim AS builder
+
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm@10
+
+# Copy workspace manifests
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc tsconfig.base.json tsconfig.json ./
+COPY lib/ ./lib/
+COPY artifacts/api-server/ ./artifacts/api-server/
+COPY scripts/ ./scripts/
+
+# Install workspace deps
+RUN pnpm install --frozen-lockfile
+
+# Build the server bundle with esbuild
+RUN pnpm --filter @workspace/api-server run build
+
+# ── Stage 2: Runtime ─────────────────────────────────────────
+FROM node:24-slim
+
+WORKDIR /app
+
+# Copy the bundle
+COPY --from=builder /app/artifacts/api-server/dist/index.cjs ./index.cjs
+
+# bcrypt is in pnpm's virtual store — copy it explicitly
+COPY --from=builder /app/node_modules/.pnpm/bcrypt@6.0.0/node_modules/bcrypt ./node_modules/bcrypt
+
+EXPOSE 5000
+
+ENV PORT=5000
+ENV NODE_ENV=production
+
+CMD ["node", "index.cjs"]

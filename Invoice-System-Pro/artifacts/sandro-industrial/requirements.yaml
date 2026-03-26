@@ -1,0 +1,17 @@
+packages:
+  "recharts": "Dashboard analytics charts and data visualization"
+  "react-hook-form": "Form state management"
+  "@hookform/resolvers": "Zod validation with react-hook-form"
+  "zod": "Schema validation"
+  "date-fns": "Human-readable date formatting"
+  "clsx": "Utility for conditionally joining classNames"
+  "tailwind-merge": "Utility for merging tailwind classes"
+
+images:
+  - path: "artifacts/sandro-industrial/public/images/auth-bg.png"
+    description: "Industrial construction site with modern sleek metallic elements, sliding windows and glass reflections, dark dramatic lighting with subtle red and green accents, professional corporate style"
+    aspect_ratio: "16:9"
+
+notes:
+  - Added fetch interceptor to inject Authorization header for all API requests automatically, leveraging the existing si_token in localStorage.
+  - Implemented the complete invoice print layout using dedicated @media print CSS to match the physical Sandro Industrial invoice format.
